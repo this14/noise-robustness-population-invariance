@@ -1,0 +1,49 @@
+# grid51.yaml -- this study (population invariance + 3-channel)
+#
+# PTB-XL / Chapman loader kwargs and nstdb_root are NOT duplicated here:
+# they are read from the companion noise study's own grid.yaml (dnr_grid) so both studies are
+# guaranteed to use the identical splits and noise files.
+
+dnr_grid: /path/to/companion_noise_study/configs/grid.yaml
+dnr_results_root: /path/to/companion_noise_study/results
+
+architectures: [resnet18, resnet34, inception1d, xresnet1d101, bilstm]
+seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]     # same as the companion noise study (the comparator)
+
+arms:
+  arm1_population:            # 3 US cohorts x 5 x 10 = 150 NEW Lead-I models
+    lead_set: I
+    datasets: [georgia, mimic, echonext]
+  arm2_channel:               # PTB-XL/Chapman x 5 x 10 = 100 NEW 3-channel models
+    lead_set: I_II_V1
+    datasets: [ptbxl, chapman]
+
+# US cohorts -- copied from us_representativeness/configs/grid.yaml
+# (CHANGE ME: placeholder paths; same split files and bad-record list as the companion multi-institutional study).
+dataset_kwargs:
+  georgia:
+    root: /path/to/georgia
+    scored_csv: /path/to/dx_mapping_scored.csv
+    split_assignment: /path/to/georgia_split_assignment.json
+    bad_records_path: /path/to/georgia_bad_records.json
+  mimic:
+    root: /path/to/mimic_hf_cohort   # X.npy, y.npy, sexes.npy, split/*.npy
+  echonext:
+    root: /path/to/EchoNext
+    metadata_csv: /path/to/EchoNext/echonext_metadata_100k_v1.1.1.csv
+
+train:
+  epochs: 30
+  batch_size: 64
+  lr: 0.001
+  patience: 5
+eval:
+  batch_size: 64
+num_workers: 4
+
+analysis:
+  # Both fixed 2026-09-25 BEFORE any this study result was seen (author decision):
+  equivalence_margin: 0.05          # TOST margin on normalized degradation (US pooled - reference)
+  min_t1_auroc_for_normalized: 0.60 # seeds with Tier-1 AUROC < 0.60 are excluded from NORMALIZED
+                                    # analyses only (denominator AUROC-0.5 near/below zero);
+                                    # absolute deltas keep every seed; excluded counts are reported
